@@ -7,18 +7,6 @@ If you are looking to add some tests for CSS support, check packages/ppx/test/na
   }
 |}];
 
-[%styled.global {|
-  p:not(.active){
-    display: flex;
-  }
-|}];
-
-[%styled.global {|
-  input[type="password"]{
-    border: 1px solid red;
-  }
-|}];
-
 module NestedPropreties = [%styled.div {|
   & span {
     color: red;
@@ -39,16 +27,7 @@ module NestedPropreties = [%styled.div {|
   & input[type="button"]{
     background-color: blue;
   }
-
 |}];
-
- module Test = [%styled.div {|
-  color: blue;
-
-  & p:not(.active) {
-    color: green;
-  };
-|}]
 
 module ShoudNotBreakOtherModulesPpxsWithStringAsPayload = [%ppx ""];
 module ShoudNotBreakOtherModulesPpxsWithMultiStringAsPayload = [%ppx {| stuff |}];
