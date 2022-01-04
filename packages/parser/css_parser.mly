@@ -15,6 +15,7 @@ open Css_types
 %token SEMI_COLON
 %token PERCENTAGE
 %token IMPORTANT
+%token AMPERSAND
 %token <string> SELECTOR
 %token <string> IDENT
 %token <string> STRING
@@ -25,6 +26,8 @@ open Css_types
 %token <string> AT_RULE_WITHOUT_BODY
 %token <string> AT_RULE
 %token <string> FUNCTION
+%token <string> PSEUDOCLASS
+%token <string> PSEUDOELEMENT
 %token <string> HASH
 %token <string> NUMBER
 %token <string> UNICODE_RANGE
@@ -147,6 +150,29 @@ declaration_without_eof:
   }
   ;
 
+selector:
+  | i = IDENT; COLON; p = PSEUDOCLASS 
+    { 
+      Component_value.(
+        Selector(
+          (i, Lex_buffer.make_loc $startpos(i) $endpos(i)), 
+          (Pseudoclass((p, Lex_buffer.make_loc $startpos(p) $endpos(p))), Lex_buffer.make_loc $startpos(p) $endpos(p))))
+    }
+  | i = IDENT; COLON; COLON; p = PSEUDOELEMENT 
+    { Component_value.(
+        Selector(
+          (i, Lex_buffer.make_loc $startpos(i) $endpos(i)),
+          (Pseudoelement((p, Lex_buffer.make_loc $startpos(p) $endpos(p))), Lex_buffer.make_loc $startpos(p) $endpos(p))))
+    }
+  | i = IDENT; b = paren_block { 
+      Component_value.
+        (Selector(
+          (i, Lex_buffer.make_loc $startpos(i) $endpos(i)),
+          (Paren_block b, Lex_buffer.make_loc $startpos(b) $endpos(b))
+          ))
+      }
+  ; 
+
 unsafe:
   UNSAFE; n = IDENT; COLON; v = list(component_value_with_loc); i = boption(IMPORTANT) {
     { Declaration.name = (n, Lex_buffer.make_loc $startpos(n) $endpos(n));
@@ -190,5 +216,5 @@ component_value:
   | d = FLOAT_DIMENSION { Component_value.Float_dimension d }
   | d = DIMENSION { Component_value.Dimension d }
   | v = VARIABLE { Component_value.Variable v }
-  | s = SELECTOR { Component_value.Selector s }
+  | s = selector { s }
   ;

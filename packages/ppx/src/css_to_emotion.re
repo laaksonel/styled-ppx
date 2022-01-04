@@ -169,7 +169,7 @@ and render_style_rule = (~isUncurried, ident, rule: Style_rule.t): Parsetree.exp
     | Ident(v)
     | Operator(v)
     | Number(v)
-    | Selector(v) => v ++ s
+    | Selector((v, _), _) => Format.eprintf("Selector %s", v) ;v ++ s
     | Hash(v) => "#" ++ v ++ s
     /*<number><string> is parsed as Dimension */
     | Dimension((number, dimension)) => number ++ dimension ++ " " ++ s
@@ -181,13 +181,13 @@ and render_style_rule = (~isUncurried, ident, rule: Style_rule.t): Parsetree.exp
     };
   };
 
-  let render_function_value = (ident, selector) => {
-    let selector_expr = string_to_const(~loc=prelude_loc, selector);
-    Helper.Exp.apply(
-      ~loc=rule.Style_rule.loc,
-      ident,
-      [(Nolabel, selector_expr), (Nolabel, dl_expr)]);
-  }
+  // let render_function_value = (ident, selector) => {
+  //   let selector_expr = string_to_const(~loc=prelude_loc, selector);
+  //   Helper.Exp.apply(
+  //     ~loc=rule.Style_rule.loc,
+  //     ident,
+  //     [(Nolabel, selector_expr), (Nolabel, dl_expr)]);
+  // }
 
   let render_rule_value = (ident, selector) => {
     let selector_expr = string_to_const(~loc=prelude_loc, selector);
@@ -201,95 +201,95 @@ and render_style_rule = (~isUncurried, ident, rule: Style_rule.t): Parsetree.exp
   }
 
   switch (prelude) {
-  | /* two-colons pseudoclasses */
-    [
-      (Selector("&"), _),
-      (Delim(":"), _),
-      (Delim(":"), _),
-      (Ident(pseudoclasses), loc),
-    ] =>
-    let pseudoclass =
-      switch (pseudoclasses) {
-      | "active" => "active"
-      | "after" => "after"
-      | "before" => "before"
-      | "first-line" => "firstLine"
-      | "first-letter" => "firstLetter"
-      | "selection" => "selection"
-      | "placeholder" => "placeholder"
-      | _ => grammar_error(loc, "Unexpected pseudo-class")
-      };
-    let ident = Helper.Exp.ident(~loc, CssJs.lident(~loc, pseudoclass));
-    Helper.Exp.apply(~loc=rule.Style_rule.loc, ident, [(Nolabel, dl_expr)]);
-  | /* single-colon pseudoclasses */
-    [
-      (Selector("&"), _),
-      (Delim(":"), _),
-      (Ident(pseudoclasses), loc)
-    ] =>
-    let pseudoclass =
-      switch (pseudoclasses) {
-      | "checked" => "checked"
-      | "disabled" => "disabled"
-      | "first-child" => "firstChild"
-      | "first-of-type" => "firstOfType"
-      | "focus" => "focus"
-      | "hover" => "hover"
-      | "last-child" => "lastChild"
-      | "not" => "not"
-      | "last-of-type" => "lastOfType"
-      | "link" => "link"
-      | "read-only" => "readOnly"
-      | "required" => "required"
-      | "visited" => "visited"
-      | "enabled" => "enabled"
-      | "empty" => "noContent"
-      | "default" => "default"
-      | "any-link" => "anyLink"
-      | "only-child" => "onlyChild"
-      | "only-of-type" => "onlyOfType"
-      | "optional" => "optional"
-      | "invalid" => "invalid"
-      | "out-of-range" => "outOfRange"
-      | "target" => "target"
-      | _ => grammar_error(loc, "Unexpected pseudo-class")
-      };
-    let ident = Helper.Exp.ident(~loc, CssJs.lident(~loc, pseudoclass));
-    Helper.Exp.apply(~loc=rule.Style_rule.loc, ident, [(Nolabel, dl_expr)]);
-   /* nth-child & friends */
-  |
-    [
-      (Selector("&"), _),
-      (Delim(":"), _),
-      (Function((_pc, loc), (_args, _args_loc)), _f_loc),
-    ]
-    =>
-    // TODO: parses and use the correct functions instead of just strings selector
-    let ident = Helper.Exp.ident(~loc, CssJs.lident(~loc, "selector"));
-    let selector =
-      List.fold_left(render_prelude_value, "", List.rev(prelude));
-      render_function_value(ident, selector);
-  | [
-    (Selector("&"), _),
-    (Ident(_), _),
-    ..._
-    ]  as v =>
-    let prelude = List.tl(v);
-    switch(prelude) {
-    | [
-      (Ident(_), _),
-      (Delim(":"), _),
-      (Function((_pc, loc), (_args, _args_loc)), _f_loc)
-    ]  =>
-    let ident = Helper.Exp.ident(~loc, CssJs.lident(~loc, "selector"));
-    let selector =
-      "& " ++ List.fold_left(render_prelude_value, "", List.rev(prelude));
-    render_function_value(ident, selector);
-     |  _ =>
-     let selector = "& " ++
-      List.fold_left(render_prelude_value, "", List.rev(prelude));
-      render_rule_value(ident, selector);
-    }
+  // | /* two-colons pseudoclasses */
+  //   [
+  //     (Selector("&"), _),
+  //     (Delim(":"), _),
+  //     (Delim(":"), _),
+  //     (Ident(pseudoclasses), loc),
+  //   ] =>
+  //   let pseudoclass =
+  //     switch (pseudoclasses) {
+  //     | "active" => "active"
+  //     | "after" => "after"
+  //     | "before" => "before"
+  //     | "first-line" => "firstLine"
+  //     | "first-letter" => "firstLetter"
+  //     | "selection" => "selection"
+  //     | "placeholder" => "placeholder"
+  //     | _ => grammar_error(loc, "Unexpected pseudo-class")
+  //     };
+  //   let ident = Helper.Exp.ident(~loc, CssJs.lident(~loc, pseudoclass));
+  //   Helper.Exp.apply(~loc=rule.Style_rule.loc, ident, [(Nolabel, dl_expr)]);
+  // | /* single-colon pseudoclasses */
+  //   [
+  //     (Selector("&"), _),
+  //     (Delim(":"), _),
+  //     (Ident(pseudoclasses), loc)
+  //   ] =>
+  //   let pseudoclass =
+  //     switch (pseudoclasses) {
+  //     | "checked" => "checked"
+  //     | "disabled" => "disabled"
+  //     | "first-child" => "firstChild"
+  //     | "first-of-type" => "firstOfType"
+  //     | "focus" => "focus"
+  //     | "hover" => "hover"
+  //     | "last-child" => "lastChild"
+  //     | "not" => "not"
+  //     | "last-of-type" => "lastOfType"
+  //     | "link" => "link"
+  //     | "read-only" => "readOnly"
+  //     | "required" => "required"
+  //     | "visited" => "visited"
+  //     | "enabled" => "enabled"
+  //     | "empty" => "noContent"
+  //     | "default" => "default"
+  //     | "any-link" => "anyLink"
+  //     | "only-child" => "onlyChild"
+  //     | "only-of-type" => "onlyOfType"
+  //     | "optional" => "optional"
+  //     | "invalid" => "invalid"
+  //     | "out-of-range" => "outOfRange"
+  //     | "target" => "target"
+  //     | _ => grammar_error(loc, "Unexpected pseudo-class")
+  //     };
+  //   let ident = Helper.Exp.ident(~loc, CssJs.lident(~loc, pseudoclass));
+  //   Helper.Exp.apply(~loc=rule.Style_rule.loc, ident, [(Nolabel, dl_expr)]);
+  //  /* nth-child & friends */
+  // |
+  //   [
+  //     (Selector("&"), _),
+  //     (Delim(":"), _),
+  //     (Function((_pc, loc), (_args, _args_loc)), _f_loc),
+  //   ]
+  //   =>
+  //   // TODO: parses and use the correct functions instead of just strings selector
+  //   let ident = Helper.Exp.ident(~loc, CssJs.lident(~loc, "selector"));
+  //   let selector =
+  //     List.fold_left(render_prelude_value, "", List.rev(prelude));
+  //     render_function_value(ident, selector);
+  // | [
+  //   (Selector("&"), _),
+  //   (Ident(_), _),
+  //   ..._
+  //   ]  as v =>
+  //   let prelude = List.tl(v);
+  //   switch(prelude) {
+  //   | [
+  //     (Ident(_), _),
+  //     (Delim(":"), _),
+  //     (Function((_pc, loc), (_args, _args_loc)), _f_loc)
+  //   ]  =>
+  //   let ident = Helper.Exp.ident(~loc, CssJs.lident(~loc, "selector"));
+  //   let selector =
+  //     "& " ++ List.fold_left(render_prelude_value, "", List.rev(prelude));
+  //   render_function_value(ident, selector);
+  //    |  _ =>
+  //    let selector = "& " ++
+  //     List.fold_left(render_prelude_value, "", List.rev(prelude));
+  //     render_rule_value(ident, selector);
+  //   }
   | _ =>
     let selector =
       List.fold_left(render_prelude_value, "", List.rev(prelude));

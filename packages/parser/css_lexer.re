@@ -51,6 +51,7 @@ let token_to_string =
   | Parser.COLON => ":"
   | Parser.SEMI_COLON => ";"
   | Parser.PERCENTAGE => "%"
+  | Parser.AMPERSAND => "&"
   | Parser.SELECTOR(s) => "SELECTOR(" ++ s ++ ")"
   | Parser.IMPORTANT => "!important"
   | Parser.IDENT(s) => "IDENT(" ++ s ++ ")"
@@ -62,6 +63,8 @@ let token_to_string =
   | Parser.AT_RULE_WITHOUT_BODY(s) => "AT_RULE_WITHOUT_BODY(" ++ s ++ ")"
   | Parser.AT_RULE(s) => "AT_RULE(" ++ s ++ ")"
   | Parser.FUNCTION(s) => "FUNCTION(" ++ s ++ ")"
+  | Parser.PSEUDOCLASS(s) => "PSEUDOCLASS(" ++ s ++ ")"
+  | Parser.PSEUDOELEMENT(s) => "PSEUDOELEMENT(" ++ s ++ ")"
   | Parser.HASH(s) => "HASH(" ++ s ++ ")"
   | Parser.NUMBER(s) => "NUMBER(" ++ s ++ ")"
   | Parser.UNICODE_RANGE(s) => "UNICODE_RANGE(" ++ s ++ ")"
@@ -191,6 +194,11 @@ let nested_at_rule = [%sedlex.regexp?
 
 let unsafe = [%sedlex.regexp? ("__UNSAFE__")];
 
+
+let pseudoclass = [%sedlex.regexp? "active" | "checked" | "default" | "dir" | "disabled" | "empty" | "enabled" | "first" | "first-child" | "first-of-type" | "fullscreen" | "focus" | "hover" | "indeterminate" | "in-range" | "invalid" | "lang" | "last-child" | "last-of-type" | "left " | "link" | "not" | "nth-child" | "nth-last-child" | "nth-last-of-type" | "nth-of-type" | "only-child" | "only-of-type" | "optional" | "out-of-range" | "read-only" | "read-write" | "required" | "right" | "root" | "scope" | "target" | "valid" | "visited" ];
+
+let pseudoelement = [%sedlex.regexp? "after" | "before" | "cue" | "first-letter" | "first-line" | "selection" | "slotted" | "backdrop" | "placeholder" | "marker" | "spelling-error" | "grammar-error"];
+
 let _a = [%sedlex.regexp? 'A' | 'a'];
 let _b = [%sedlex.regexp? 'B' | 'b'];
 let _c = [%sedlex.regexp? 'C' | 'c'];
@@ -273,6 +281,8 @@ let rec get_next_token = buf => {
   open Css_parser;
   switch%sedlex (buf) {
   | eof => EOF
+  | pseudoelement => PSEUDOELEMENT(Sedlexing.latin1(buf))
+  | pseudoclass => PSEUDOCLASS(Sedlexing.latin1(buf))
   | ';' => SEMI_COLON
   | '}' => RIGHT_BRACE
   | '{' => LEFT_BRACE
@@ -282,7 +292,7 @@ let rec get_next_token = buf => {
   | '[' => LEFT_BRACKET
   | ']' => RIGHT_BRACKET
   | '%' => PERCENTAGE
-  | '&' => SELECTOR("&")
+  | '&' => AMPERSAND
   | unsafe => UNSAFE
   | variable => get_variable(buf)
   | operator => OPERATOR(Sedlexing.latin1(buf))

@@ -86,7 +86,8 @@ and render_component_value = (ast: with_loc(Component_value.t)) => {
   | Percentage(string) => "Percentage(" ++ string ++ ")"
   | Ident(string) => "Ident(" ++ string ++ ")"
   | String(string) => "String(" ++ string ++ ")"
-  | Selector(string) => "Selector(" ++ string ++ ")"
+  | Selector((string, _), (Pseudoelement((n, _)), _)) => "Selector(" ++ string ++ "," ++ n ++ ")"
+  | Selector((string, _), (Pseudoclass((n, _)), _)) => "Selector(" ++ string ++ "," ++ n ++ ")"
   | Uri(string) => "Uri(" ++ string ++ ")"
   | Operator(string) => "Operator(" ++ string ++ ")"
   | Delim(string) => "Delim(" ++ string ++ ")"
@@ -108,16 +109,18 @@ and render_component_value = (ast: with_loc(Component_value.t)) => {
   | Dimension((a, b)) => "Dimension(" ++ a ++ ", " ++ b ++ ")"
   | Variable(variables) =>
     "Variable(" ++ String.concat(", ", variables) ++ ")"
+  | _ => assert false
   };
 };
 
 let container_lnum = 0;
 let pos = Lexing.dummy_pos;
+// let css = read_line();
 let ast =
   Css_lexer.parse_stylesheet(
     ~container_lnum,
     ~pos,
-    "html, body {display: flex}",
+    "h1 {}",
   );
 
 print_endline(render_stylesheet(ast));
