@@ -87,9 +87,7 @@ module SelectorsMediaQueries = [%styled.div {j|
     background: blue;
   }
 
-  &:hover {
-    background: green;
-  }
+
 
   & > p { color: pink; font-size: 24px; }
 |j}

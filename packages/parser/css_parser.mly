@@ -151,27 +151,27 @@ declaration_without_eof:
   ;
 
 selector:
-  | i = IDENT; COLON; p = PSEUDOCLASS 
-    { 
+  | i = IDENT; p = PSEUDOCLASS
+    {
       Component_value.(
         Selector(
-          (i, Lex_buffer.make_loc $startpos(i) $endpos(i)), 
+          (i, Lex_buffer.make_loc $startpos(i) $endpos(i)),
           (Pseudoclass((p, Lex_buffer.make_loc $startpos(p) $endpos(p))), Lex_buffer.make_loc $startpos(p) $endpos(p))))
     }
-  | i = IDENT; COLON; COLON; p = PSEUDOELEMENT 
+  | i = IDENT; p = PSEUDOELEMENT
     { Component_value.(
         Selector(
           (i, Lex_buffer.make_loc $startpos(i) $endpos(i)),
           (Pseudoelement((p, Lex_buffer.make_loc $startpos(p) $endpos(p))), Lex_buffer.make_loc $startpos(p) $endpos(p))))
     }
-  | i = IDENT; b = paren_block { 
+  | i = IDENT; b = paren_block {
       Component_value.
         (Selector(
           (i, Lex_buffer.make_loc $startpos(i) $endpos(i)),
           (Paren_block b, Lex_buffer.make_loc $startpos(b) $endpos(b))
           ))
       }
-  ; 
+  ;
 
 unsafe:
   UNSAFE; n = IDENT; COLON; v = list(component_value_with_loc); i = boption(IMPORTANT) {
