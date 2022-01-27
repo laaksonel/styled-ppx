@@ -1617,7 +1617,10 @@ let parse_declarations = (property: string, value: string) => {
   | Error(_) =>
     switch (render_to_expr(property, value)) {
     | Ok(value) => Ok(value)
-    | Error(_)
+    | Error(e) => {
+      let.ok () = is_valid_string ? Ok() : Error(e);
+      Ok([render_when_unsupported_features(property, value)]);
+    }
     | exception Unsupported_feature =>
       let.ok () = is_valid_string ? Ok() : Error(`Invalid_value(value));
       Ok([render_when_unsupported_features(property, value)]);

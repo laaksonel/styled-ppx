@@ -46,6 +46,11 @@ let tests = [
     "fit-content(50%)",
     `Fit_content(`Percentage(50.)),
   ),
+  /* test(
+    [%value "<calc-product> [ [ '+' | '-' ] <calc-product> ]*"],
+    "fit-content(50%)",
+    `Fit_content(`Percentage(50.)),
+  ), */
 ];
 
 describe("Parser", ({test, _}) => {

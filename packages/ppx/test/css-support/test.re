@@ -1,3 +1,5 @@
+[%css {|width: calc(10%);|}];
+
 /* CSS Backgrounds and Borders Module Level 3 */
 [%css {|background-repeat: space|}];
 [%css {|background-repeat: round|}];
