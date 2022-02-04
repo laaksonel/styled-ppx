@@ -69,7 +69,57 @@ let render_angle =
 
 let list_to_longident = vars => vars |> String.concat(".") |> Longident.parse;
 
+<<<<<<< Updated upstream
 let render_variable = (name) => list_to_longident(name) |> txt |> Helper.Exp.ident;
+||||||| constructed merge base
+let render_variable = name =>
+  list_to_longident(name) |> txt |> Helper.Exp.ident;
+
+/* type product_op = [ `Static_0(unit, calc_value) | `Static_1(unit, float) ]
+and calc_product = (calc_value, list(product_op))
+and sum_op = [ `dash | `cross ]
+and calc_sum = (calc_product, list((sum_op, calc_product)))
+and calc_value = [ `Number(float) | `Dimension(unit) | `Percentage(float) | `Static(unit, calc_sum, unit) ]; */
+
+let render_calc_sum = (_sum/* : calc_sum */) => {
+  /* TODO: render into CssJs */
+  render_integer(1);
+};
+
+let render_calc = fun
+  | `Dimension(_) => render_integer(1)
+  | `Number(n) => render_number(n)
+  | `Percertage(pct) => render_percentage(pct)
+  | `Static((), sum, ()) => render_calc_sum(sum);
+
+let _render_widows = fun
+  | `Integer(i) => render_integer(i)
+  | `Function_calc((c, _)) => render_calc(c);
+=======
+let render_variable = name =>
+  list_to_longident(name) |> txt |> Helper.Exp.ident;
+
+/* type product_op = [ `Static_0(unit, calc_value) | `Static_1(unit, float) ]
+and calc_product = (calc_value, list(product_op))
+and sum_op = [ `dash | `cross ]
+and calc_sum = (calc_product, list((sum_op, calc_product)))
+and calc_value = [ `Number(float) | `Dimension(unit) | `Percentage(float) | `Static(unit, calc_sum, unit) ]; */
+
+let render_calc_sum = (_sum/* : calc_sum */) => {
+  /* TODO: render into CssJs */
+  render_integer(1);
+};
+
+let render_calc = fun
+  | `Dimension(_) => render_integer(1)
+  | `Number(n) => render_number(n)
+  | `Percertage(pct) => render_percentage(pct)
+  | `Static((), sum, ()) => render_calc_sum(sum);
+
+let render_widows = fun
+  | `Integer(i) => render_integer(i)
+  | `Function_calc((c, _)) => render_calc(c);
+>>>>>>> Stashed changes
 
 let variants_to_expression =
   fun
@@ -1142,6 +1192,14 @@ let transition_duration =
     Parser.property_transition_duration,
     ~call=[%expr CssJs.transitionDuration],
   );
+<<<<<<< Updated upstream
+||||||| constructed merge base
+let widows = unsupportedProperty(Parser.property_widows);
+/* let widows = apply(Parser.property_widows, [%expr CssJs.width], render_widows); */
+=======
+/* let widows = unsupportedProperty(Parser.property_widows); */
+let widows = apply(Parser.property_widows, [%expr CssJs.width], render_widows);
+>>>>>>> Stashed changes
 let transition_timing_function =
   unsupported(
     Parser.property_transition_timing_function,

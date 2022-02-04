@@ -222,6 +222,7 @@ let hex_color =
   `$()` only supports variables and Module accessors to variables.
   In compile-time the bs-css bindings would enforce the types of those variables.
 */
+
 let interpolation = {
   open Rule;
   open Let;
@@ -268,3 +269,9 @@ let flex_value =
     | _ => Error(["expected flex_value"])
     }
   );
+
+let length_interpolation =
+  combine_xor([
+    interpolation,
+    map(length, v => `Length(v)),
+  ]);

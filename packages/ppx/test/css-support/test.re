@@ -3076,3 +3076,5 @@
 /* [%css {|math-depth: add(1)|}]; */
 /* [%css {|math-depth: 0|}]; */
 /* [%css {|math-depth: 1|}]; */
+
+[%css {|widows: calc(10px)|}];
