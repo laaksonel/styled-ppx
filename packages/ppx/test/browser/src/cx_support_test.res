@@ -14,7 +14,7 @@ let testData = list{
   (%cx("box-sizing: border-box"), CssJs.style(. [CssJs.boxSizing(#borderBox)])),
   (
     %cx("font-family: 'Open Sans', '-system', sans-serif"),
-    CssJs.style(. [CssJs.unsafe("fontFamily", "'Open Sans', '-system', sans-serif")]),
+    CssJs.style(. [CssJs.unsafe("fontFamily", "'Open Sans' , '-system' , sans-serif")]),
   ),
   (%cx("flex-flow: row wrap"), CssJs.style(. [CssJs.flexDirection(#row), CssJs.flexWrap(#wrap)])),
   (

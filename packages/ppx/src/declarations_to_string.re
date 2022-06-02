@@ -524,6 +524,8 @@ let parse_declarations = (property: string, value: string) => {
     Parser.check_property(~name=property, value)
     |> Result.map_error((`Unknown_value) => `Not_found);
 
+  Format.eprintf("value in declarations_to_string:%s\n", value);
+
   switch (render_css_global_values(property, value)) {
   | Ok(value) => Ok(value)
   | Error(_) => render_to_expr(property, value)

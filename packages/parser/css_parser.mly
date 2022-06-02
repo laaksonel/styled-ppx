@@ -25,6 +25,7 @@ open Css_types
 %token <string> AT_RULE_WITHOUT_BODY
 %token <string> AT_RULE
 %token <string> FUNCTION
+%token <string> MEDIA_FEATURE
 %token <string> PSEUDOCLASS
 %token <string> PSEUDOELEMENT
 %token <string> HASH
@@ -158,6 +159,13 @@ selector:
         | Some xs -> [(Component_value.Paren_block(xs), Lex_buffer.make_loc $startpos(xs) $endpos(xs))]
         | None -> []
   }
+  // | i = IDENT; p = PSEUDOCLASS; xs = list(component_value_with_loc); RIGHT_PAREN {
+  //   [
+  //     (Component_value.Ident(i), Lex_buffer.make_loc $startpos(i) $endpos(i));
+  //     (Component_value.Pseudoclass((p, Lex_buffer.make_loc $startpos(p) $endpos(p) )), Lex_buffer.make_loc $startpos(p) $endpos(p));
+  //     (Component_value.Paren_block(xs), Lex_buffer.make_loc $startpos(xs) $endpos(xs))
+  //   ]
+  // }
   | i = IDENT; p = PSEUDOELEMENT
     {
           [
@@ -207,7 +215,26 @@ bracket_block:
 component_value_with_loc:
   | c = component_value { (c, Lex_buffer.make_loc $startpos $endpos) }
 
+
+media_feature:
+  LEFT_PAREN; f = IDENT; COLON; xs = list(component_value_with_loc); RIGHT_PAREN {
+    Component_value.Media_feature(
+      (f, Lex_buffer.make_loc $startpos(f) $endpos(f)),
+      (xs, Lex_buffer.make_loc $startpos(xs) $endpos(xs))
+    )
+  };
+
+function_expr:
+  | f = FUNCTION; xs = list(component_value_with_loc); RIGHT_PAREN {
+    Component_value.Function (
+      (f, Lex_buffer.make_loc $startpos(f) $endpos(f)),
+      (xs, Lex_buffer.make_loc $startpos(xs) $endpos(xs))
+    )
+  };
+
 component_value:
+  | m = media_feature; { m }
+  | f = function_expr; { f }
   | b = paren_block { Component_value.Paren_block b }
   | b = bracket_block { Component_value.Bracket_block b }
   | n = NUMBER; PERCENTAGE { Component_value.Percentage n }
@@ -215,14 +242,14 @@ component_value:
   | s = STRING { Component_value.String s }
   | u = URI { Component_value.Uri u }
   | o = OPERATOR { Component_value.Operator o }
-  | d = DELIM { Component_value.Delim d }
   | COLON { Component_value.Delim ":" }
-  | f = FUNCTION; xs = paren_block {
-      Component_value.Function (
-        (f, Lex_buffer.make_loc $startpos(f) $endpos(f)),
-        (xs, Lex_buffer.make_loc $startpos(xs) $endpos(xs))
-      )
-    }
+  | d = DELIM { Component_value.Delim d }
+  // | f = FUNCTION; xs = paren_block {
+  //     Component_value.Function (
+  //       (f, Lex_buffer.make_loc $startpos(f) $endpos(f)),
+  //       (xs, Lex_buffer.make_loc $startpos(xs) $endpos(xs))
+  //     )
+  //   }
   | h = HASH { Component_value.Hash h }
   | n = NUMBER { Component_value.Number n }
   | r = UNICODE_RANGE { Component_value.Unicode_range r }

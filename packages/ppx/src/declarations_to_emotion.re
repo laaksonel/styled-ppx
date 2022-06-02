@@ -1924,6 +1924,8 @@ let parse_declarations = (property: string, value: string) => {
     Parser.check_property(~name=property, value)
     |> Result.map_error((`Unknown_value) => `Not_found);
 
+  // let value = value |> String.trim;
+
   switch (render_css_global_values(property, value)) {
   | Ok(value) => Ok(value)
   | Error(_) =>

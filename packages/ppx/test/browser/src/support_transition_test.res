@@ -41,7 +41,7 @@ let testData = list{
     "transition",
     %cx("transition: width 2s, height 2s, background-color 2s, transform 2s"),
     CssJs.style(. [
-      CssJs.unsafe("transition", "width 2s, height 2s, background-color 2s, transform 2s"),
+      CssJs.unsafe("transition", "width 2s , height 2s , background-color 2s , transform 2s"),
     ]),
   ),
 }

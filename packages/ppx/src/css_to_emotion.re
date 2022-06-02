@@ -37,6 +37,14 @@ module CssJs = {
 let grammar_error = (loc, message) =>
   raise(Css_lexer.GrammarError((message, loc)));
 
+let dimension_of_string =
+  fun
+  | Length => "Length"
+  | Angle => "Angle"
+  | Time => "Time"
+  | Frequency => "Frequency";
+
+
 let number_to_const = number =>
   if (String.contains(number, '.')) {
     Helper.Const.float(number);
@@ -64,7 +72,12 @@ let rec render_at_rule = (ar: At_rule.t): Parsetree.expression =>
   | ("media", _) => render_media_query(ar)
   | (n, _) =>
     grammar_error(ar.At_rule.loc, "At-rule @" ++ n ++ " not supported")
-  }
+}
+
+and render_declaration_value = values => {
+    let f = (acc, (v, _)) => acc ++ " " ++ pp_ast(v)
+    List.fold_left(f, "", values) |> String.trim;
+}
 and render_media_query = (ar: At_rule.t): Parsetree.expression => {
   let concat = (~loc, expr, acc) => {
     let concat_fn = {txt: Lident("^"), loc}  |> Helper.Exp.ident(~loc);
@@ -72,7 +85,7 @@ and render_media_query = (ar: At_rule.t): Parsetree.expression => {
   }
 
   let invalid_format = loc =>
-    grammar_error(loc, "@media value isn't a valid format");
+    grammar_error(loc, "@media value isn't a valid format " ++ source_code_of_loc(loc));
 
   let loc = ar.loc;
   let (_, name_loc) = ar.name;
@@ -80,29 +93,22 @@ and render_media_query = (ar: At_rule.t): Parsetree.expression => {
   let parse_condition = (acc) =>
     fun
     | (
-        Paren_block([
-          (Ident(ident), ident_loc),
-          (Delim(":"), _),
-          (_, first_value_loc),
-          ...values,
-        ]),
+        Media_feature(
+          (property, property_loc),
+          (values, _)
+        ),
         _,
       ) => {
-        let values = values |> List.map(((_, loc)) => loc);
-        let values_length = List.length(values);
-        let last_value_loc =
-          values_length == 0
-            ? first_value_loc : List.nth(values, values_length - 1);
-        let loc = {
-          ...first_value_loc,
-          loc_end: last_value_loc.Location.loc_end,
-        };
-        let value = source_code_of_loc(loc);
+
+        let value = render_declaration_value(values);
+
+        Format.eprintf("value in css_to_emotion:%s\n", value);
         let exprs =
-          switch (Declarations_to_string.parse_declarations(ident, value)) {
+          switch (Declarations_to_string.parse_declarations(property, value)) {
           | Error(`Not_found) =>
-            grammar_error(ident_loc, "unsupported property: " ++ ident)
+            grammar_error(property_loc, "unsupported property: " ++ property)
           | Error(`Invalid_value(_error)) =>
+            Format.eprintf("maybe here?");
             grammar_error(loc, "invalid value")
           | Ok(exprs) => exprs
           };
@@ -121,10 +127,14 @@ and render_media_query = (ar: At_rule.t): Parsetree.expression => {
       let id = Helper.Exp.constant(~loc, Helper.Const.string(id));
       [%expr [%e acc] ++ [%e id] ++ " "]
       }
-    | (_, loc) => invalid_format(loc);
+    | (_, loc) => {
+    Format.eprintf("no way its here");
+       invalid_format(loc);
+       
+    }
 
   if(prelude == []){
-      invalid_format(loc);
+    invalid_format(loc);
   };
 
   let query = prelude |> List.fold_left(parse_condition, [%expr ""])
@@ -148,22 +158,78 @@ and render_media_query = (ar: At_rule.t): Parsetree.expression => {
 }
 and render_declaration = (d: Declaration.t): list(Parsetree.expression) => {
   let (name, name_loc) = d.Declaration.name;
-  let (_valueList, loc) = d.Declaration.value;
-  let value_source = source_code_of_loc(loc);
+  let (valueList, loc) = d.Declaration.value;
 
-  switch (Declarations_to_emotion.parse_declarations(name, value_source)) {
+  let value = render_declaration_value(valueList);
+
+  switch (Declarations_to_emotion.parse_declarations(name, value)) {
   | Ok(exprs) => exprs
   | Error(`Not_found) => grammar_error(name_loc, "unknown property " ++ name)
   | Error(`Invalid_value(value)) =>
     grammar_error(loc, "invalid property value " ++ value ++ ". For property " ++ name)
   };
 }
+
+
+and concat_ast = acc => fun
+  | [] => acc
+  | [v] => acc ++ v
+  | [v, ",", ...rest] => concat_ast(acc ++ v ++ ", ", rest)
+  | [v, ...rest] => concat_ast(acc ++ v ++ " ", rest)
+
+and pp_ast = fun
+  | Paren_block(block) =>
+    {
+      let block = block |> List.map(x => x |> fst |> pp_ast) |> concat_ast("");
+      "(" ++ block ++ ")"
+    }
+  | Bracket_block(block) =>
+  {    
+  let block =
+      block |> List.map(x => x |> fst |> pp_ast) |> String.concat("");
+    "[" ++ block ++ "]"
+    }  
+  | Percentage(string) => string ++ "%"
+  | Uri(string) => "url(" ++ string ++ ")"
+  | String(string) => "'" ++ string ++ "'"
+  | Delim(",") => ","
+  | Ident(string) 
+  | Operator(string) 
+  | Number(string)
+  | Unicode_range(string)
+  | Delim(string) => string
+  | Hash(string) => "#" ++ string
+  | Function(name, body) =>
+    {
+      Format.eprintf("here with f name = %s\n", fst(name));
+      let body =
+      body |> fst |> List.map(x => x |> fst |> pp_ast) |> concat_ast("")
+    fst(name) ++ "(" ++ body ++ ")";}
+  | Media_feature(name, value) => {
+    let value = value |> fst |> List.map(x => x |> fst |> pp_ast) |> concat_ast("");
+    "(" ++ fst(name) ++ ": " ++ value ++ ")"
+  }
+  | Float_dimension((a, b, _)) => a ++ b
+  | Ampersand => "&"
+  | Dimension((a, b)) => a ++ b
+  | Variable(variable) =>
+    "$(" ++  (variable |> String.concat(".")) ++ ")"
+  | Pseudoelement((v, _)) => v
+  | Pseudoclass((v, _)) => v
+  | Selector(v) => {
+    List.map(x => x |> fst |> pp_ast, v) |> concat_ast("")
+  }
+  // | _ => assert false
+
 and render_unsafe_declaration = (d: Declaration.t, _d_loc: Location.t): list(Parsetree.expression) => {
   let (name, _name_loc) = d.Declaration.name;
-  let (_valueList, loc) = d.Declaration.value;
-  let value_source = source_code_of_loc(loc);
+  let (valueList, _) = d.Declaration.value;
 
-  [Declarations_to_emotion.render_when_unsupported_features(name, value_source)];
+  let value = render_declaration_value(valueList);
+
+  Format.eprintf("value in unsafe render:%s\n", value);
+
+  [Declarations_to_emotion.render_when_unsupported_features(name, value)];
 }
 and render_declarations = ds => {
   List.concat_map(
@@ -203,7 +269,7 @@ and render_style_rule = (ident, rule: Style_rule.t): Parsetree.expression => {
           | Delim(".") => render_prelude_value(acc ++ ".", rest)
           | Delim(",") => render_prelude_value(acc ++ ", ", rest)
           | Delim(v) => render_prelude_value(acc ++ " " ++ v ++ " ", rest)
-          | Ident(v)
+          | Ident(v) => render_prelude_value(acc ++ v ++ " ", rest)
           | Operator(v)
           | Number(v) => render_prelude_value(acc ++ v, rest)
           | Hash(v) => render_prelude_value(acc ++ "#" ++ v, rest)
@@ -238,6 +304,8 @@ and render_style_rule = (ident, rule: Style_rule.t): Parsetree.expression => {
           | Variable(v) => {
               concat(~loc=value_loc, string_to_const(~loc=value_loc, acc), concat(~loc=value_loc, render_variable(~loc=value_loc, v), render_prelude_value("", rest)))
           }
+          | Function((name, _), (values, _)) =>
+            concat(~loc, string_to_const(~loc, acc), concat(~loc, string_to_const(~loc, name), concat(~loc, string_to_const(~loc, "("), concat(~loc, render_prelude_value("", values), string_to_const(~loc, ")")))))
           | _ => grammar_error(value_loc, "Unexpected selector");
         }
       }

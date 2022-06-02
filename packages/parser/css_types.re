@@ -25,6 +25,7 @@ module rec Component_value: {
     | Float_dimension((string, string, dimension))
     | Dimension((string, string))
     | Variable(list(string))
+    | Media_feature(with_loc(string), with_loc(list(with_loc(t))))
     | Ampersand
 
 } = Component_value

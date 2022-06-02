@@ -93,6 +93,10 @@ and render_component_value = (ast: with_loc(Component_value.t)) => {
     let body =
       body |> fst |> List.map(render_component_value) |> String.concat(", ");
     "Function(" ++ fst(name) ++ ", " ++ body ++ ")";
+  | Media_feature(name, value) =>
+    let body =
+      value |> fst |> List.map(render_component_value) |> String.concat(", ");
+    "Media_feature(" ++ fst(name) ++ ", " ++ body ++ ")";
   | Hash(string) => "Hash(" ++ string ++ ")"
   | Number(string) => "Number(" ++ string ++ ")"
   | Unicode_range(string) => "Unicode_range(" ++ string ++ ")"

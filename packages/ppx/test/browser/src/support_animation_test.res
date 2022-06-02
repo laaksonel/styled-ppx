@@ -39,7 +39,7 @@ let testData = [
   (
     "animation-iteration-count",
     %cx("animation-iteration-count: 2, 1, 5"),
-    CssJs.style(. [CssJs.unsafe("animationIterationCount", "2, 1, 5")]),
+    CssJs.style(. [CssJs.unsafe("animationIterationCount", "2 , 1 , 5")]),
   ),
   (
     "animation-fill-mode",

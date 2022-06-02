@@ -153,3 +153,15 @@ module Sequence = [%styled.button (~size, ~color) => {
     [%css "width: 100%;"],
   |]
 }];
+
+
+module B = [%styled.div {|
+     div p {
+      width: 100%;
+      left:  0;
+    }
+|}]
+
+// module A = [%styled.div {|
+//     transition: width 2s, height 2s, background-color 2s, transform 2s
+// |}]

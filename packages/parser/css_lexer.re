@@ -77,7 +77,8 @@ let token_to_string =
     ++ ")"
   | Parser.DIMENSION((n, d)) => "DIMENSION(" ++ n ++ ", " ++ d ++ ")"
   | Parser.VARIABLE(v) => "VARIABLE(" ++ (String.concat(".", v)) ++ ")"
-  | Parser.UNSAFE => "UNSAFE";
+  | Parser.UNSAFE => "UNSAFE"
+  | Parser.MEDIA_FEATURE(s) => "MEDIA_FEATURE(" ++ s ++ ")";
 
 let () =
   Location.register_error_of_exn(
@@ -254,7 +255,7 @@ let frequency = [%sedlex.regexp? (_h, _z) | (_k, _h, _z)];
 let discard_comments_and_white_spaces = buf => {
   let rec discard_white_spaces = buf =>
     switch%sedlex (buf) {
-    | Plus(white_space) => discard_white_spaces(buf)
+    // | Plus(white_space) => discard_white_spaces(buf)
     | "/*" => discard_comments(buf)
     | _ => ()
     }
@@ -273,17 +274,28 @@ let discard_comments_and_white_spaces = buf => {
 let get_ident = (value) => {
   open Css_parser;
   switch(value) {
-    | "attr" | "calc" | "conic-gradient" | "counter" | "cubic-bezier" | "hsl" | "hsla" | "linear-gradient" | "max" | "min" | "radial-gradient" | "repeating-conic-gradient" | "repeating-linear-gradient" | "repeating-radial-gradient" | "rgb" | "rgba" | "var" => FUNCTION(value)
     | "after" | "before" | "cue" | "first-letter" | "first-line" | "selection" | "slotted" | "backdrop" | "placeholder" | "marker" | "spelling-error" | "grammar-error" => PSEUDOELEMENT(value)
-    | "active" | "checked" | "default" | "dir" | "disabled" | "empty" | "enabled" | "first" | "first-child" | "first-of-type" | "fullscreen" | "focus" | "hover" | "indeterminate" | "in-range" | "invalid" | "lang" | "last-child" | "last-of-type" | "link" | "not" | "nth-child" | "nth-last-child" | "nth-last-of-type" | "nth-of-type" | "only-child" | "only-of-type" | "optional" | "out-of-range" | "read-only" | "read-write" | "required" | "right" | "root" | "scope" | "target" | "valid" | "visited" => PSEUDOCLASS(value)
+    | "active" | "checked" | "default" | "dir" | "disabled" | "empty" | "enabled" | "first" | "first-child" | "first-of-type" | "fullscreen" | "focus" | "hover" | "indeterminate" | "in-range" | "invalid" | "lang" | "last-child" | "last-of-type" | "link" | "not" | "nth-child" | "nth-last-child" | "nth-last-of-type" | "nth-of-type" | "only-child" | "only-of-type" | "optional" | "out-of-range" | "read-only" | "read-write" | "required"| "root" | "scope" | "target" | "valid" | "visited" => PSEUDOCLASS(value)
+    // | "width" | "min-width" | "max-width" | "height"| "min-height" | "max-height" | "device-width" | "min-device-width" | "max-device-width"| "device-height" | "min-device-height" | "max-device-height"| "aspect-ratio" | "min-aspect-ratio" | "max-aspect-ratio"| "device-aspect-ratio" | "min-device-aspect-ratio" | "max-device-aspect-ratio"| "color" | "min-color" | "max-color"| "color-index" | "min-color-index" | "max-color-index" | "monochrome" | "min-monochrome" | "max-monochrome" | "resolution" | "min-resolution" | "max-resolution" | "scan" | "grid" => MEDIA_FEATURE(value)
     | _ => IDENT(value)
   }
 }
+
+// let get_function = value => {
+//     open Css_parser;
+//   switch(value) {
+//     | "after" | "before" | "cue" | "first-letter" | "first-line" | "selection" | "slotted" | "backdrop" | "placeholder" | "marker" | "spelling-error" | "grammar-error" => PSEUDOELEMENT(value)
+//     | "active" | "checked" | "default" | "dir" | "disabled" | "empty" | "enabled" | "first" | "first-child" | "first-of-type" | "fullscreen" | "focus" | "hover" | "indeterminate" | "in-range" | "invalid" | "lang" | "last-child" | "last-of-type" | "link" | "not" | "nth-child" | "nth-last-child" | "nth-last-of-type" | "nth-of-type" | "only-child" | "only-of-type" | "optional" | "out-of-range" | "read-only" | "read-write" | "required"| "root" | "scope" | "target" | "valid" | "visited" => PSEUDOCLASS(value)
+//     // | "width" | "min-width" | "max-width" | "height"| "min-height" | "max-height" | "device-width" | "min-device-width" | "max-device-width"| "device-height" | "min-device-height" | "max-device-height"| "aspect-ratio" | "min-aspect-ratio" | "max-aspect-ratio"| "device-aspect-ratio" | "min-device-aspect-ratio" | "max-device-aspect-ratio"| "color" | "min-color" | "max-color"| "color-index" | "min-color-index" | "max-color-index" | "monochrome" | "min-monochrome" | "max-monochrome" | "resolution" | "min-resolution" | "max-resolution" | "scan" | "grid" => MEDIA_FEATURE(value)
+//     | _ => FUNCTION(value)
+//   }
+// }
 
 let rec get_next_token = buf => {
   discard_comments_and_white_spaces(buf);
   open Css_parser;
   switch%sedlex (buf) {
+  | white_space => get_next_token(buf)
   | eof => EOF
   | ';' => SEMI_COLON
   | '}' => RIGHT_BRACE
@@ -308,8 +320,9 @@ let rec get_next_token = buf => {
   /* NOTE: should be placed above ident, otherwise pattern with
    * '-[0-9a-z]{1,6}' cannot be matched */
   | (_u, '+', unicode_range) => UNICODE_RANGE(Sedlexing.latin1(buf))
-  | ident => get_ident(Sedlexing.latin1(buf))
+  | (ident, '(') => FUNCTION(Sedlexing.latin1(~drop=1, buf))
   | ('#', name) => HASH(Sedlexing.latin1(~skip=1, buf))
+  | ident => get_ident(Sedlexing.latin1(buf))
   | number => get_dimension(Sedlexing.latin1(buf), buf)
   | any => DELIM(Sedlexing.latin1(buf))
   | _ => assert(false)
