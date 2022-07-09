@@ -3,7 +3,6 @@
  (public_name reason-css-parser.lib)
  (libraries
   sedlex
-  ocaml-migrate-parsetree
   css-spec-parser.lib
   reason-css-lexer.lib
   compiler-libs
